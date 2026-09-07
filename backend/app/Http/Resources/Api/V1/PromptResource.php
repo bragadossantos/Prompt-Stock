@@ -17,14 +17,17 @@ class PromptResource extends JsonResource
         $user = $request->user('sanctum') ?? $request->user();
 
         $canAccessFullContent = false;
+        $isPurchased = false;
 
         if ($this->isFree()) {
             $canAccessFullContent = true;
         } elseif ($user) {
             if ($user->isAdmin() || $user->id === $this->author_id) {
                 $canAccessFullContent = true;
+            } elseif ($user->hasPurchased($this->id)) {
+                $canAccessFullContent = true;
+                $isPurchased = true;
             }
-            // In Phase 5/6, we will also check: if ($user->hasPurchased($this->id)) $canAccessFullContent = true;
         }
 
         $isFavorited = false;
@@ -65,6 +68,7 @@ class PromptResource extends JsonResource
             'user_interactions' => [
                 'is_favorited' => $isFavorited,
                 'is_saved' => $isSaved,
+                'is_purchased' => $isPurchased,
             ],
             'category' => $this->category ? [
                 'id' => $this->category->id,

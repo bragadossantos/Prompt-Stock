@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\V1\Creator\CreatorPromptController;
 use App\Http\Controllers\Api\V1\Creator\CreatorStudioController;
 use App\Http\Controllers\Api\V1\Creator\PublicCreatorController;
 use App\Http\Controllers\Api\V1\Library\LibraryController;
+use App\Http\Controllers\Api\V1\Marketplace\MarketplaceController;
+use App\Http\Controllers\Api\V1\Order\CheckoutController;
+use App\Http\Controllers\Api\V1\Order\OrderController;
 use App\Http\Controllers\Api\V1\Prompt\PromptController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +44,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/creators', [PublicCreatorController::class, 'index']);
     Route::get('/creators/{username}', [PublicCreatorController::class, 'show']);
 
+    // Public Marketplace Discovery
+    Route::get('/marketplace', [MarketplaceController::class, 'index']);
+
     // Authentication Routes (Rate-limited)
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
@@ -53,12 +59,18 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    // Protected User Library & Interactions
+    // Protected User Library, Interactions & Orders
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/library', [LibraryController::class, 'index']);
         Route::post('/prompts/{id}/favorite', [LibraryController::class, 'toggleFavorite']);
         Route::post('/prompts/{id}/save', [LibraryController::class, 'toggleSave']);
         Route::post('/creator/apply', [CreatorStudioController::class, 'apply']);
+
+        // Orders & Checkout
+        Route::post('/checkout', [CheckoutController::class, 'checkout']);
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+        Route::post('/orders/{orderNumber}/pay', [CheckoutController::class, 'pay']);
     });
 
     // Protected Creator Studio Routes

@@ -95,4 +95,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(CreatorWithdrawal::class);
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function hasPurchased(int $promptId): bool
+    {
+        return $this->orders()
+            ->where('status', 'completed')
+            ->whereHas('items', function ($query) use ($promptId) {
+                $query->where('prompt_id', $promptId);
+            })
+            ->exists();
+    }
 }

@@ -25,6 +25,7 @@ export interface PromptMetrics {
 export interface PromptUserInteractions {
   is_favorited: boolean;
   is_saved: boolean;
+  is_purchased?: boolean;
 }
 
 export interface Prompt {

@@ -24,6 +24,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { CheckoutModal } from "@/components/prompts/CheckoutModal";
 
 export default function PromptDetailPage() {
   const { slug } = useParams();
@@ -38,6 +39,15 @@ export default function PromptDetailPage() {
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  const handleBuyClick = () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    setIsCheckoutOpen(true);
+  };
 
   useEffect(() => {
     async function loadPrompt() {
@@ -207,7 +217,7 @@ export default function PromptDetailPage() {
                   className="shadow-glow"
                 />
               ) : (
-                <Button variant="primary" size="md">
+                <Button variant="primary" size="md" onClick={handleBuyClick} className="shadow-glow">
                   <Lock className="w-4 h-4 mr-1.5" />
                   Comprar Prompt ({prompt.price.toLocaleString("pt-AO")} {prompt.currency})
                 </Button>
@@ -271,7 +281,7 @@ export default function PromptDetailPage() {
                   <p className="text-xs text-slate-400 max-w-sm mb-4">
                     Este prompt foi criado com engenharia avançada. Adquira o acesso vitalício com pagamento local em AOA.
                   </p>
-                  <Button variant="primary" size="md">
+                  <Button variant="primary" size="md" onClick={handleBuyClick} className="shadow-glow">
                     Desbloquear por {prompt.price.toLocaleString("pt-AO")} {prompt.currency}
                   </Button>
                 </div>
@@ -362,6 +372,14 @@ export default function PromptDetailPage() {
           </div>
         </div>
       </div>
+
+      {prompt && (
+        <CheckoutModal
+          prompt={prompt}
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+        />
+      )}
     </div>
   );
 }

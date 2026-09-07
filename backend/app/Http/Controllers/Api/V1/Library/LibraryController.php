@@ -29,9 +29,23 @@ class LibraryController extends Controller
             ->orderByDesc('favorites.created_at')
             ->get();
 
+        $purchasedPromptIds = $user->orders()
+            ->where('status', 'completed')
+            ->with('items')
+            ->get()
+            ->pluck('items')
+            ->flatten()
+            ->pluck('prompt_id')
+            ->unique();
+
+        $purchasedPrompts = Prompt::whereIn('id', $purchasedPromptIds)
+            ->with(['category', 'author', 'tags', 'results'])
+            ->get();
+
         return response()->json([
             'success' => true,
             'data' => [
+                'purchased' => PromptResource::collection($purchasedPrompts),
                 'saved' => PromptResource::collection($savedPrompts),
                 'favorites' => PromptResource::collection($favoritePrompts),
             ],
