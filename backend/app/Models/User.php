@@ -60,4 +60,29 @@ class User extends Authenticatable
     {
         return in_array($this->role, ['user', 'creator', 'admin']);
     }
+
+    public function prompts()
+    {
+        return $this->hasMany(Prompt::class, 'author_id');
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    public function savedPrompts()
+    {
+        return $this->hasMany(SavedPrompt::class);
+    }
+
+    public function favoritePrompts()
+    {
+        return $this->belongsToMany(Prompt::class, 'favorites');
+    }
+
+    public function savedLibraryPrompts()
+    {
+        return $this->belongsToMany(Prompt::class, 'saved_prompts');
+    }
 }

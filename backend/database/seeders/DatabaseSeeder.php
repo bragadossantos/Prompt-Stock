@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             CategorySeeder::class,
             SettingSeeder::class,
+            PromptSeeder::class,
         ]);
     }
 }
