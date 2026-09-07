@@ -24,6 +24,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { CheckoutModal } from "@/components/prompts/CheckoutModal";
 
 export default function PromptDetailPage() {
@@ -156,8 +157,9 @@ export default function PromptDetailPage() {
         {prompt.category && (
           <>
             <ChevronRight className="w-3 h-3 text-slate-600" />
-            <Link href={`/explore?category=${encodeURIComponent(prompt.category.slug)}`} className="hover:text-slate-300">
-              {prompt.category.name}
+            <Link href={`/explore?category=${encodeURIComponent(prompt.category.slug)}`} className="hover:text-slate-300 inline-flex items-center gap-1.5">
+              <CategoryIcon nameOrSlug={prompt.category.slug || prompt.category.name} size="sm" />
+              <span>{prompt.category.name}</span>
             </Link>
           </>
         )}
@@ -339,9 +341,12 @@ export default function PromptDetailPage() {
                 <span className="text-slate-400">Modelo Recomendado</span>
                 <span className="font-semibold text-accent-cyan font-mono">{prompt.ai_model || "Qualquer versão"}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-surface-border/50">
+              <div className="flex justify-between items-center py-1.5 border-b border-surface-border/50">
                 <span className="text-slate-400">Categoria</span>
-                <span className="font-semibold text-white">{prompt.category?.name || "Geral"}</span>
+                <span className="font-semibold text-white inline-flex items-center gap-1.5">
+                  <CategoryIcon nameOrSlug={prompt.category?.slug || prompt.category?.name || "Geral"} size="sm" />
+                  <span>{prompt.category?.name || "Geral"}</span>
+                </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-surface-border/50">
                 <span className="text-slate-400">Total de Cópias</span>

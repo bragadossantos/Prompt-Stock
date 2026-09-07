@@ -13,15 +13,16 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 
 export default function HomePage() {
   const featuredCategories = [
-    { name: "Image Generation", icon: "🎨", count: "1,240+", desc: "Midjourney, DALL-E 3 & Flux" },
-    { name: "Programming", icon: "💻", count: "890+", desc: "Clean Code, Python, React & DevOps" },
-    { name: "Marketing", icon: "🎯", count: "720+", desc: "Copywriting, Funnels & Ads de Alta Conversão" },
-    { name: "Office & Productivity", icon: "⚡", count: "650+", desc: "Planilhas, Automação & Workflows" },
-    { name: "Business", icon: "📈", count: "510+", desc: "Estratégia, Pitch Decks & Finanças" },
-    { name: "Writing", icon: "✍️", count: "480+", desc: "Artigos SEO, Livros & Roteiros Criativos" },
+    { name: "Image Generation", count: "1,240+", desc: "Midjourney, DALL-E 3 & Flux" },
+    { name: "Programming", count: "890+", desc: "Clean Code, Python, React & DevOps" },
+    { name: "Marketing", count: "720+", desc: "Copywriting, Funnels & Ads de Alta Conversão" },
+    { name: "Office & Productivity", count: "650+", desc: "Planilhas, Automação & Workflows" },
+    { name: "Business", count: "510+", desc: "Estratégia, Pitch Decks & Finanças" },
+    { name: "Writing", count: "480+", desc: "Artigos SEO, Livros & Roteiros Criativos" },
   ];
 
   return (
@@ -125,9 +126,7 @@ export default function HomePage() {
               className="glass-card p-6 rounded-2xl flex flex-col justify-between group"
             >
               <div>
-                <div className="text-3xl mb-4 p-3 bg-surface rounded-xl w-fit border border-surface-border">
-                  {cat.icon}
-                </div>
+                <CategoryIcon nameOrSlug={cat.name} size="md" showContainer className="mb-4" />
                 <h3 className="text-lg font-bold text-white group-hover:text-brand-400 transition-colors">
                   {cat.name}
                 </h3>
@@ -135,8 +134,8 @@ export default function HomePage() {
               </div>
               <div className="mt-6 pt-4 border-t border-surface-border/50 flex items-center justify-between text-xs text-slate-500">
                 <span>{cat.count} prompts</span>
-                <span className="text-brand-400 font-medium group-hover:translate-x-1 transition-transform">
-                  Ver prompts →
+                <span className="text-brand-400 font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Ver prompts <ArrowRight className="w-3.5 h-3.5" />
                 </span>
               </div>
             </Link>

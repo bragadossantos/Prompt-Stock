@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, Filter, Sparkles, Check } from "lucide-react";
+import { Search, Filter, Sparkles, Check, ShieldCheck, Users, Crown, Cpu, Layers } from "lucide-react";
 import { Category } from "@/types/auth";
 
 interface PromptFiltersProps {
@@ -73,33 +73,36 @@ export function PromptFilters({
         {/* Source Pills */}
         <button
           onClick={() => onSourceTypeChange("")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
             sourceType === ""
               ? "bg-brand-600 text-white shadow-glow"
               : "bg-surface hover:bg-surface-hover text-slate-400 hover:text-slate-200 border border-surface-border"
           }`}
         >
-          Todas as Origens
+          <Layers className="w-3.5 h-3.5" />
+          <span>Todas as Origens</span>
         </button>
         <button
           onClick={() => onSourceTypeChange("official")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
             sourceType === "official"
               ? "bg-brand-600 text-white shadow-glow"
               : "bg-surface hover:bg-surface-hover text-slate-400 hover:text-slate-200 border border-surface-border"
           }`}
         >
-          PromptStock Official
+          <ShieldCheck className="w-3.5 h-3.5 text-accent-cyan" />
+          <span>PromptStock Official</span>
         </button>
         <button
           onClick={() => onSourceTypeChange("creator")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
             sourceType === "creator"
               ? "bg-brand-600 text-white shadow-glow"
               : "bg-surface hover:bg-surface-hover text-slate-400 hover:text-slate-200 border border-surface-border"
           }`}
         >
-          Criadores da Comunidade
+          <Users className="w-3.5 h-3.5 text-brand-300" />
+          <span>Criadores da Comunidade</span>
         </button>
 
         <span className="w-px h-5 bg-surface-border hidden sm:block mx-1" />
@@ -117,29 +120,34 @@ export function PromptFilters({
         </button>
         <button
           onClick={() => onPromptTypeChange("free")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
             promptType === "free"
               ? "bg-accent-emerald text-slate-900"
               : "bg-surface hover:bg-surface-hover text-slate-400 hover:text-slate-200 border border-surface-border"
           }`}
         >
-          Grátis
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Grátis</span>
         </button>
         <button
           onClick={() => onPromptTypeChange("premium")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
             promptType === "premium"
-              ? "bg-amber-400 text-slate-900"
+              ? "bg-amber-400 text-slate-900 font-bold"
               : "bg-surface hover:bg-surface-hover text-slate-400 hover:text-slate-200 border border-surface-border"
           }`}
         >
-          Premium
+          <Crown className="w-3.5 h-3.5" />
+          <span>Premium</span>
         </button>
       </div>
 
       {/* AI Tool Row */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-slate-500 font-medium shrink-0">Ferramenta IA:</span>
+        <span className="inline-flex items-center gap-1 text-slate-500 font-medium shrink-0">
+          <Cpu className="w-3.5 h-3.5 text-brand-400" />
+          <span>Ferramenta IA:</span>
+        </span>
         {aiTools.map((tool) => {
           const val = tool === "Todos" ? "" : tool;
           const isSelected = aiTool === val;

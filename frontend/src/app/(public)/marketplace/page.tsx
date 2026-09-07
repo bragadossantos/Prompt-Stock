@@ -14,8 +14,10 @@ import {
   Star,
   Loader2,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { apiClient } from "@/lib/api-client";
 import { Prompt, PromptsResponse } from "@/types/prompt";
 
@@ -240,8 +242,9 @@ export default function MarketplacePage() {
                     </span>
                   </div>
 
-                  <span className="text-brand-400 font-semibold group-hover:underline flex items-center gap-1">
-                    {isFree ? "Usar Grátis" : "Comprar Prompt"} &rarr;
+                  <span className="text-brand-400 font-semibold flex items-center gap-1 group-hover:text-brand-300">
+                    <span>{isFree ? "Usar Grátis" : "Comprar Prompt"}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
               </NextLink>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { apiClient } from "@/lib/api-client";
 import { Category } from "@/types/auth";
 import { Grid, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -57,10 +58,8 @@ export default function CategoriesPage() {
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center border border-surface-border text-brand-400 font-bold">
-                    {cat.sort_order}
-                  </div>
-                  <span className="text-[11px] font-semibold text-accent-cyan bg-accent-cyan/10 px-2.5 py-0.5 rounded-full">
+                  <CategoryIcon nameOrSlug={cat.slug || cat.name} size="md" showContainer />
+                  <span className="text-[11px] font-semibold text-accent-cyan bg-accent-cyan/10 border border-accent-cyan/20 px-2.5 py-0.5 rounded-full">
                     Ativa
                   </span>
                 </div>

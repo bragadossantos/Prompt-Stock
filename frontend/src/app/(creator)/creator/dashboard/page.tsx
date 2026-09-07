@@ -110,9 +110,17 @@ export default function CreatorDashboardPage() {
             <Sparkles className="w-3.5 h-3.5" />
             <span>Creator Studio</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Olá, {profile?.username ? `@${profile.username}` : "Criador"} 👋
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Olá, {profile?.username ? `@${profile.username}` : "Criador"}
+            </h1>
+            {profile?.is_verified && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-cyan bg-accent-cyan/10 border border-accent-cyan/20 px-2 py-0.5 rounded-full">
+                <CheckCircle2 className="w-3 h-3 text-accent-cyan" />
+                Verificado
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-400 mt-0.5">
             Aqui está o desempenho dos seus prompts e o controlo das suas receitas em tempo real.
           </p>

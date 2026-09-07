@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Cpu,
 } from "lucide-react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 
 interface PromptCardProps {
   prompt: Prompt;
@@ -67,8 +68,9 @@ export function PromptCard({ prompt }: PromptCardProps) {
           </span>
 
           {prompt.category && (
-            <span className="text-[11px] font-medium text-slate-400">
-              {prompt.category.name}
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-300">
+              <CategoryIcon nameOrSlug={prompt.category.slug || prompt.category.name} size="sm" />
+              <span>{prompt.category.name}</span>
             </span>
           )}
         </div>
