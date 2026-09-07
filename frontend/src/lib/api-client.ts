@@ -27,10 +27,24 @@ export async function apiClient<T = any>(
 
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (err: any) {
+    if (typeof window !== "undefined" && window.location.protocol === "https:" && url.startsWith("http://")) {
+      throw new ApiError(
+        0,
+        "Bloqueio de Segurança (Mixed Content): O frontend na Vercel (HTTPS) não pode acessar uma API local insecure (HTTP). É necessário hospedar a API Laravel em um servidor HTTPS e configurar a variável NEXT_PUBLIC_API_URL na Vercel."
+      );
+    }
+    throw new ApiError(
+      0,
+      `Não foi possível conectar ao servidor backend (${API_BASE_URL}). Verifique se o backend Laravel está ativo.`
+    );
+  }
 
   const responseData = await response.json().catch(() => null);
 
