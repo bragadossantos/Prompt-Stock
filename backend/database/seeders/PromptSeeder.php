@@ -32,6 +32,33 @@ class PromptSeeder extends Seeder
             ]
         );
 
+        \App\Models\CreatorProfile::firstOrCreate(
+            ['user_id' => $creator->id],
+            [
+                'username' => 'manuel_ia',
+                'headline' => 'Engenheiro de Prompts Sênior & Especialista Midjourney',
+                'bio' => 'Crio soluções de prompt avançadas para negócios, copywriting de alta conversão e arte generativa fotorealista.',
+                'available_balance' => 25000.00,
+                'pending_balance' => 5000.00,
+                'withdrawn_balance' => 45000.00,
+                'is_verified' => true,
+                'total_sales_count' => 14,
+            ]
+        );
+
+        // Sample regular customer
+        User::firstOrCreate(
+            ['email' => 'cliente@promptstock.com'],
+            [
+                'uuid' => (string) Str::uuid(),
+                'name' => 'Adriano Comprador',
+                'password' => bcrypt('PromptStock@2026!'),
+                'role' => 'user',
+                'status' => 'active',
+                'bio' => 'Entusiasta de inteligência artificial e automações.',
+            ]
+        );
+
         $catImage = Category::where('slug', 'image-generation')->first();
         $catDev = Category::where('slug', 'programming')->first();
         $catMarketing = Category::where('slug', 'marketing')->first();

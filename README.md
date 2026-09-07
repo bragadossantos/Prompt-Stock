@@ -69,3 +69,10 @@ API REST disponível em: `http://127.0.0.1:8000/api/v1`
 
 - **Administrador:** `admin@promptstock.com`
 - **Senha:** `PromptStock@2026!`
+
+---
+
+## 🚀 Como Hospedar em Produção
+
+Consulte o nosso guia detalhado em [DEPLOYMENT.md](DEPLOYMENT.md) para instruções passo a passo de como publicar o Frontend na **Vercel** e conectar à API Laravel.
+
