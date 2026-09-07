@@ -16,6 +16,7 @@ import {
   LogOut,
   PlusCircle,
   ShieldAlert,
+  Users,
 } from "lucide-react";
 
 export function Navbar() {
@@ -59,6 +60,13 @@ export function Navbar() {
               <Grid className="w-4 h-4 text-accent-violet" />
               Categorias
             </Link>
+            <Link
+              href="/creators"
+              className="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-1.5"
+            >
+              <Users className="w-4 h-4 text-brand-400" />
+              Criadores
+            </Link>
           </nav>
         </div>
 
@@ -88,10 +96,10 @@ export function Navbar() {
               )}
 
               {isCreator && (
-                <Link href="/creator/prompts/create">
+                <Link href="/creator/dashboard">
                   <Button variant="outline" size="sm" className="border-brand-500/50 text-brand-300">
-                    <PlusCircle className="w-3.5 h-3.5 text-brand-400" />
-                    Criar Prompt
+                    <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+                    Studio
                   </Button>
                 </Link>
               )}
@@ -171,6 +179,14 @@ export function Navbar() {
             >
               <Grid className="w-4 h-4 text-accent-violet" />
               Categorias
+            </Link>
+            <Link
+              href="/creators"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-slate-300 hover:bg-white/5 flex items-center gap-2"
+            >
+              <Users className="w-4 h-4 text-brand-400" />
+              Criadores
             </Link>
           </nav>
 

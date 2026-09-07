@@ -85,4 +85,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Prompt::class, 'saved_prompts');
     }
+
+    public function creatorProfile()
+    {
+        return $this->hasOne(CreatorProfile::class);
+    }
+
+    public function withdrawals()
+    {
+        return $this->hasMany(CreatorWithdrawal::class);
+    }
 }

@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\V1\Admin\AdminPromptController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Category\CategoryController;
+use App\Http\Controllers\Api\V1\Creator\CreatorPromptController;
+use App\Http\Controllers\Api\V1\Creator\CreatorStudioController;
+use App\Http\Controllers\Api\V1\Creator\PublicCreatorController;
 use App\Http\Controllers\Api\V1\Library\LibraryController;
 use App\Http\Controllers\Api\V1\Prompt\PromptController;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +37,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/prompts/{slug}', [PromptController::class, 'show']);
     Route::post('/prompts/{id}/copy', [PromptController::class, 'copy'])->middleware('throttle:30,1');
 
+    // Public Creators
+    Route::get('/creators', [PublicCreatorController::class, 'index']);
+    Route::get('/creators/{username}', [PublicCreatorController::class, 'show']);
+
     // Authentication Routes (Rate-limited)
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
@@ -51,6 +58,20 @@ Route::prefix('v1')->group(function () {
         Route::get('/library', [LibraryController::class, 'index']);
         Route::post('/prompts/{id}/favorite', [LibraryController::class, 'toggleFavorite']);
         Route::post('/prompts/{id}/save', [LibraryController::class, 'toggleSave']);
+        Route::post('/creator/apply', [CreatorStudioController::class, 'apply']);
+    });
+
+    // Protected Creator Studio Routes
+    Route::prefix('creator')->middleware(['auth:sanctum', 'creator'])->group(function () {
+        Route::get('/dashboard', [CreatorStudioController::class, 'dashboard']);
+        Route::get('/earnings', [CreatorStudioController::class, 'earnings']);
+        Route::post('/withdrawals', [CreatorStudioController::class, 'requestWithdrawal']);
+
+        // Creator Prompts Lifecycle
+        Route::get('/prompts', [CreatorPromptController::class, 'index']);
+        Route::post('/prompts', [CreatorPromptController::class, 'store']);
+        Route::put('/prompts/{id}', [CreatorPromptController::class, 'update']);
+        Route::delete('/prompts/{id}', [CreatorPromptController::class, 'destroy']);
     });
 
     // Protected Admin Panel Routes
