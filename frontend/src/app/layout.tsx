@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   title: "PromptStock — Discover, Use and Sell Better Prompts",
   description: "A plataforma e marketplace líder para descoberta, organização, compra e venda de prompts para Inteligência Artificial.",
   keywords: ["AI Prompts", "Midjourney", "ChatGPT", "Claude", "Marketplace de Prompts", "Prompt Engineering"],
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.svg",
+  },
   openGraph: {
     title: "PromptStock — The Marketplace for Better Prompts",
     description: "Encontre os melhores prompts testados para ChatGPT, Midjourney e Claude.",
