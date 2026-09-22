@@ -13,6 +13,21 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
+    /**
+     * In-memory defaults for attributes not explicitly set. Without this,
+     * a User instance built via create()/make() without an explicit
+     * 'status' has the attribute simply absent (null) until reloaded from
+     * the database — even though the users table defaults the column to
+     * 'active'. That mismatch made Sanctum::actingAs() in tests (which
+     * uses the in-memory instance as-is, unlike the real auth:sanctum
+     * guard which always re-fetches from the DB) look "suspended" to
+     * EnsureUserIsActive. Declaring the default here keeps in-memory and
+     * persisted state consistent.
+     */
+    protected $attributes = [
+        'status' => 'active',
+    ];
+
     protected $fillable = [
         'uuid',
         'name',

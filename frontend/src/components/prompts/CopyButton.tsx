@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, X } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 
 interface CopyButtonProps {
@@ -22,13 +22,14 @@ export function CopyButton({
   onCopied,
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (copied || isCopying) return;
+    if (copied || failed || isCopying) return;
 
     setIsCopying(true);
 
@@ -37,22 +38,34 @@ export function CopyButton({
         await navigator.clipboard.writeText(textToCopy);
       }
 
-      // Record copy event in API
-      const res = await apiClient<{ success: boolean; data: { copy_count: number } }>(
-        `/prompts/${promptId}/copy`,
-        { method: "POST" }
-      );
-
+      // The clipboard write succeeded — the user's task is done, so show
+      // success regardless of whether the background tracking call below works.
       setCopied(true);
-      if (onCopied && res?.data?.copy_count) {
-        onCopied(res.data.copy_count);
-      }
-
       setTimeout(() => {
         setCopied(false);
       }, 2500);
+
+      // Record copy event in API. This is best-effort telemetry: if it fails,
+      // fail silently since the user already got what they wanted (the copy).
+      try {
+        const res = await apiClient<{ success: boolean; data: { copy_count: number } }>(
+          `/prompts/${promptId}/copy`,
+          { method: "POST" }
+        );
+        if (onCopied && res?.data?.copy_count) {
+          onCopied(res.data.copy_count);
+        }
+      } catch (trackingErr) {
+        console.error("Falha ao registar cópia do prompt:", trackingErr);
+      }
     } catch (err) {
+      // The clipboard write itself failed — this is something the user needs
+      // to know about, since nothing was actually copied.
       console.error("Falha ao copiar prompt:", err);
+      setFailed(true);
+      setTimeout(() => {
+        setFailed(false);
+      }, 2000);
     } finally {
       setIsCopying(false);
     }
@@ -65,12 +78,20 @@ export function CopyButton({
         className={`p-2 rounded-xl transition-all duration-200 ${
           copied
             ? "bg-accent-emerald/20 text-accent-emerald border border-accent-emerald/30"
+            : failed
+            ? "bg-red-500/20 text-red-400 border border-red-500/30"
             : "bg-surface hover:bg-surface-hover text-slate-300 hover:text-white border border-surface-border"
         } ${className}`}
-        title={copied ? "Copiado!" : "Copiar prompt"}
+        title={copied ? "Copiado!" : failed ? "Falha ao copiar" : "Copiar prompt"}
         aria-label="Copiar prompt"
       >
-        {copied ? <Check className="w-4 h-4 text-accent-emerald" /> : <Copy className="w-4 h-4" />}
+        {copied ? (
+          <Check className="w-4 h-4 text-accent-emerald" />
+        ) : failed ? (
+          <X className="w-4 h-4 text-red-400" />
+        ) : (
+          <Copy className="w-4 h-4" />
+        )}
       </button>
     );
   }
@@ -89,6 +110,8 @@ export function CopyButton({
       } ${
         copied
           ? "bg-accent-emerald/20 text-accent-emerald border border-accent-emerald/30 shadow-glow"
+          : failed
+          ? "bg-red-500/20 text-red-400 border border-red-500/30"
           : "bg-surface hover:bg-surface-hover hover:border-brand-500/50 text-slate-200 border border-surface-border"
       } ${className}`}
     >
@@ -96,6 +119,11 @@ export function CopyButton({
         <>
           <Check className="w-4 h-4 text-accent-emerald" />
           <span>Prompt Copiado!</span>
+        </>
+      ) : failed ? (
+        <>
+          <X className="w-4 h-4 text-red-400" />
+          <span>Falha ao Copiar</span>
         </>
       ) : (
         <>

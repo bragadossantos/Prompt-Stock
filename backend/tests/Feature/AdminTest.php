@@ -127,7 +127,7 @@ class AdminTest extends TestCase
 
         // Suspend
         $res = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->patchJson("/api/v1/admin/users/{$targetUser->id}/status", [
+            ->patchJson("/api/v1/admin/users/{$targetUser->uuid}/status", [
                 'status' => 'suspended',
             ]);
 
@@ -146,7 +146,7 @@ class AdminTest extends TestCase
         $token = $admin->createToken('admin-token')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->patchJson("/api/v1/admin/users/{$admin->id}/status", [
+            ->patchJson("/api/v1/admin/users/{$admin->uuid}/status", [
                 'status' => 'suspended',
             ]);
 
@@ -164,7 +164,7 @@ class AdminTest extends TestCase
         $targetUser = User::factory()->create(['role' => 'user']);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->patchJson("/api/v1/admin/users/{$targetUser->id}/role", [
+            ->patchJson("/api/v1/admin/users/{$targetUser->uuid}/role", [
                 'role' => 'creator',
             ]);
 

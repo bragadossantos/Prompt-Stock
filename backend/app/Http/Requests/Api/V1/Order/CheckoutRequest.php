@@ -15,7 +15,7 @@ class CheckoutRequest extends FormRequest
     {
         return [
             'prompt_id' => ['required', 'integer', 'exists:prompts,id'],
-            'payment_method' => ['required', 'string', 'in:multicaixa_express,bank_transfer,test_gateway'],
+            'payment_method' => ['required', 'string', 'in:multicaixa_express,bank_transfer'],
             'payment_phone' => ['required_if:payment_method,multicaixa_express', 'nullable', 'string', 'max:20'],
             'notes' => ['nullable', 'string', 'max:500'],
         ];

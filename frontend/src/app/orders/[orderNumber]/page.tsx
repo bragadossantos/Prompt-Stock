@@ -52,7 +52,7 @@ export default function OrderDetailsPage() {
     }
   }, [orderNumber]);
 
-  const handleSimulatePayment = async () => {
+  const handleConfirmPayment = async () => {
     try {
       setIsPaying(true);
       setError(null);
@@ -64,7 +64,7 @@ export default function OrderDetailsPage() {
         await fetchOrder();
       }
     } catch (err: any) {
-      setError(err.message || "Erro ao liquidar o pagamento.");
+      setError(err.message || "Erro ao registar a confirmação de pagamento.");
     } finally {
       setIsPaying(false);
     }
@@ -103,6 +103,9 @@ export default function OrderDetailsPage() {
   }
 
   const isCompleted = order.status === "completed";
+  const isAwaitingConfirmation = order.status === "awaiting_confirmation";
+  const isRejected = order.status === "failed";
+  const isPending = order.status === "pending";
   const firstItem = order.items?.[0];
   const prompt = firstItem?.prompt;
 
@@ -126,16 +129,40 @@ export default function OrderDetailsPage() {
               O conteúdo secreto deste prompt foi desbloqueado com sucesso e já está disponível na sua conta.
             </p>
           </div>
+        ) : isAwaitingConfirmation ? (
+          <div className="space-y-2">
+            <div className="w-14 h-14 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              A Confirmar o Seu Pagamento
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+              Recebemos a sua confirmação. A nossa equipa está a validar a transação — o acesso será liberado assim que o pagamento for verificado.
+            </p>
+          </div>
+        ) : isRejected ? (
+          <div className="space-y-2">
+            <div className="w-14 h-14 rounded-3xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mx-auto">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Pagamento Não Confirmado
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+              {order.notes || "Não foi possível validar o pagamento desta encomenda. Contacte o suporte ou tente adquirir o prompt novamente."}
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
             <div className="w-14 h-14 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
               <Clock className="w-8 h-8 animate-pulse" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Aguardando Confirmação do Pagamento
+              Aguardando Pagamento
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-              Siga as instruções abaixo para liquidar o valor e desbloquear o acesso imediato.
+              Siga as instruções abaixo para liquidar o valor e depois confirme o pagamento.
             </p>
           </div>
         )}
@@ -151,10 +178,12 @@ export default function OrderDetailsPage() {
             className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase ${
               isCompleted
                 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                : isRejected
+                ? "bg-red-500/10 text-red-400 border border-red-500/30"
                 : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
             }`}
           >
-            {isCompleted ? "Pago & Ativo" : "Pendente"}
+            {isCompleted ? "Pago & Ativo" : isAwaitingConfirmation ? "Em Confirmação" : isRejected ? "Rejeitado" : "Pendente"}
           </span>
         </div>
 
@@ -169,14 +198,34 @@ export default function OrderDetailsPage() {
           </div>
           <div className="text-right shrink-0">
             <div className="text-lg font-black text-white">
-              {order.total_amount.toLocaleString("pt-AO")} {order.currency}
+              {order.total_amount.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {order.currency}
             </div>
             <div className="text-[10px] text-emerald-400 font-medium">Acesso Completo</div>
           </div>
         </div>
 
-        {/* Payment Details / Simulation */}
-        {!isCompleted && (
+        {/* Awaiting admin confirmation — payment already reported, nothing left for the buyer to do */}
+        {isAwaitingConfirmation && (
+          <div className="p-5 rounded-2xl bg-surface/80 border border-surface-border flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-300 leading-relaxed">
+              O seu comprovativo de pagamento foi registado com sucesso. Um administrador irá confirmar a transação em breve e o conteúdo será desbloqueado automaticamente — não é necessário submeter novamente.
+            </p>
+          </div>
+        )}
+
+        {/* Rejected — payment could not be verified */}
+        {isRejected && (
+          <div className="p-5 rounded-2xl bg-surface/80 border border-surface-border flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Esta encomenda foi marcada como não confirmada. Se acredita que isto é um engano, contacte o suporte da PromptStock com o número da encomenda <strong className="text-white font-mono">{order.order_number}</strong>.
+            </p>
+          </div>
+        )}
+
+        {/* Payment Details — only while still pending buyer confirmation */}
+        {isPending && (
           <div className="p-5 rounded-2xl bg-surface/80 border border-surface-border space-y-4">
             <div className="flex items-center gap-2 text-xs font-bold text-white uppercase tracking-wider">
               {order.payment_method === "multicaixa_express" ? (
@@ -201,7 +250,7 @@ export default function OrderDetailsPage() {
                 <p className="text-[11px] text-slate-400">
                   Abra a app Multicaixa Express no seu telefone e aprove a autorização de{" "}
                   <strong className="text-brand-400">
-                    {order.total_amount.toLocaleString("pt-AO")} {order.currency}
+                    {order.total_amount.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {order.currency}
                   </strong>.
                 </p>
               </div>
@@ -236,17 +285,20 @@ export default function OrderDetailsPage() {
               </div>
             )}
 
-            {/* Instant Confirmation Action (Demo & Live) */}
+            {/* Buyer declares payment was made; an admin must confirm it before access unlocks */}
             <div className="pt-2">
               <Button
                 variant="primary"
-                onClick={handleSimulatePayment}
+                onClick={handleConfirmPayment}
                 isLoading={isPaying}
                 className="w-full gap-2 shadow-glow"
               >
-                <span>Simular Confirmação Multicaixa Express / Pagar Agora</span>
+                <span>Já Efetuei o Pagamento</span>
                 <CheckCircle2 className="w-4 h-4" />
               </Button>
+              <p className="text-[10px] text-slate-500 text-center mt-2">
+                Após confirmar, um administrador irá validar o pagamento antes do conteúdo ser desbloqueado.
+              </p>
             </div>
           </div>
         )}

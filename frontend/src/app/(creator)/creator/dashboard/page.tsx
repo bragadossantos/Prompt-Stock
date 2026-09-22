@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { apiClient } from "@/lib/api-client";
 import { CreatorDashboardData } from "@/types/creator";
+import { formatCurrency } from "@/lib/format";
 
 export default function CreatorDashboardPage() {
   const [data, setData] = useState<CreatorDashboardData | null>(null);
@@ -65,8 +66,8 @@ export default function CreatorDashboardPage() {
   const statCards = [
     {
       title: "Saldo Disponível",
-      value: `${metrics.available_balance.toLocaleString("pt-AO")} ${metrics.currency}`,
-      subtitle: `Pendente: ${metrics.pending_balance.toLocaleString("pt-AO")} ${metrics.currency}`,
+      value: formatCurrency(metrics.available_balance, metrics.currency),
+      subtitle: `Pendente: ${formatCurrency(metrics.pending_balance, metrics.currency)}`,
       icon: Wallet,
       color: "text-emerald-400",
       bg: "bg-emerald-500/10",
@@ -74,7 +75,7 @@ export default function CreatorDashboardPage() {
     },
     {
       title: "Ganhos Totais",
-      value: `${metrics.total_earnings.toLocaleString("pt-AO")} ${metrics.currency}`,
+      value: formatCurrency(metrics.total_earnings, metrics.currency),
       subtitle: `${metrics.total_sales} vendas realizadas`,
       icon: TrendingUp,
       color: "text-amber-400",
@@ -207,7 +208,7 @@ export default function CreatorDashboardPage() {
                           {p.ai_tool}
                         </span>
                         <span>•</span>
-                        <span>{p.prompt_type === "free" ? "Gratuito" : `${p.price.toLocaleString("pt-AO")} AOA`}</span>
+                        <span>{p.prompt_type === "free" ? "Gratuito" : formatCurrency(p.price, "AOA")}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <Eye className="w-3 h-3 text-slate-500" /> {p.metrics?.view_count || 0}
@@ -273,7 +274,7 @@ export default function CreatorDashboardPage() {
                 <div key={w.id} className="py-3 flex items-center justify-between gap-3">
                   <div>
                     <div className="text-xs font-bold text-white">
-                      {w.amount.toLocaleString("pt-AO")} {w.currency}
+                      {formatCurrency(w.amount, w.currency)}
                     </div>
                     <div className="text-[10px] text-slate-400 uppercase">
                       {w.payment_method === "multicaixa_express" ? "Express" : "IBAN"} • {w.account_details}

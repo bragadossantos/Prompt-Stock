@@ -102,15 +102,6 @@ export default function LoginPage() {
               Entrar na Conta
             </Button>
           </form>
-
-          {/* Quick Demo Credentials */}
-          <div className="mt-6 pt-5 border-t border-surface-border/60 text-xs text-slate-400">
-            <div className="font-semibold text-slate-300 mb-1">Acesso Administrativo Padrão:</div>
-            <div className="p-2.5 rounded-lg bg-surface/90 border border-surface-border font-mono text-[11px] text-slate-300 select-all">
-              <div>Email: <span className="text-brand-400">admin@promptstock.com</span></div>
-              <div>Senha: <span className="text-brand-400">PromptStock@2026!</span></div>
-            </div>
-          </div>
         </div>
 
         {/* Footer Link */}

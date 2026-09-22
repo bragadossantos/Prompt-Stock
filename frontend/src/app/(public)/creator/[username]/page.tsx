@@ -20,6 +20,7 @@ import { apiClient } from "@/lib/api-client";
 import { PublicCreator } from "@/types/creator";
 import { Prompt } from "@/types/prompt";
 import { Button } from "@/components/ui/Button";
+import { formatCurrency } from "@/lib/format";
 
 export default function CreatorProfilePage() {
   const params = useParams();
@@ -206,7 +207,7 @@ export default function CreatorProfilePage() {
                       </span>
                     ) : (
                       <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                        {p.price.toLocaleString("pt-AO")} {p.currency || "AOA"}
+                        {formatCurrency(p.price, p.currency || "AOA")}
                       </span>
                     )}
                   </div>

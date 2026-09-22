@@ -5,6 +5,7 @@ import Link from "next/link";
 import { apiClient } from "@/lib/api-client";
 import { Prompt, PromptsResponse } from "@/types/prompt";
 import { Button } from "@/components/ui/Button";
+import { formatCurrency } from "@/lib/format";
 import {
   FileText,
   PlusCircle,
@@ -26,10 +27,12 @@ export default function AdminPromptsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadPrompts = async () => {
     setIsLoading(true);
     try {
+      setError(null);
       const params = new URLSearchParams();
       if (search) params.set("q", search);
       if (statusFilter) params.set("status", statusFilter);
@@ -38,8 +41,9 @@ export default function AdminPromptsPage() {
       if (res.success && res.data) {
         setPrompts(res.data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao carregar prompts do admin:", err);
+      setError(err.message || "Não foi possível carregar os prompts. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -189,11 +193,22 @@ export default function AdminPromptsPage() {
       </div>
 
       {/* Prompts Table */}
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-3 text-xs">
+          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       <div className="glass rounded-2xl border border-surface-border overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
             <Loader2 className="w-7 h-7 animate-spin text-brand-500" />
             <p className="text-xs">Carregando prompts...</p>
+          </div>
+        ) : error ? (
+          <div className="py-16 text-center text-slate-500 text-xs">
+            Não foi possível exibir os prompts devido a um erro de carregamento.
           </div>
         ) : prompts.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">
@@ -240,7 +255,7 @@ export default function AdminPromptsPage() {
                         <span className="text-accent-emerald font-bold text-[11px]">Grátis</span>
                       ) : (
                         <span className="text-amber-300 font-bold text-[11px]">
-                          {p.price.toLocaleString("pt-AO")} {p.currency}
+                          {formatCurrency(p.price, p.currency)}
                         </span>
                       )}
                     </td>

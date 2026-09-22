@@ -6,6 +6,7 @@ backend/vendor/
 # Production & Build outputs
 frontend/.next/
 frontend/out/
+frontend/*.tsbuildinfo
 backend/public/build/
 backend/public/hot
 

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { CheckoutModal } from "@/components/prompts/CheckoutModal";
+import { formatCurrency } from "@/lib/format";
 
 export default function PromptDetailPage() {
   const { slug } = useParams();
@@ -192,7 +193,7 @@ export default function PromptDetailPage() {
                 </span>
               ) : (
                 <span className="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
-                  Premium • {prompt.price.toLocaleString("pt-AO")} {prompt.currency}
+                  Premium • {formatCurrency(prompt.price, prompt.currency)}
                 </span>
               )}
 
@@ -221,7 +222,7 @@ export default function PromptDetailPage() {
               ) : (
                 <Button variant="primary" size="md" onClick={handleBuyClick} className="shadow-glow">
                   <Lock className="w-4 h-4 mr-1.5" />
-                  Comprar Prompt ({prompt.price.toLocaleString("pt-AO")} {prompt.currency})
+                  Comprar Prompt ({formatCurrency(prompt.price, prompt.currency)})
                 </Button>
               )}
 
@@ -284,7 +285,7 @@ export default function PromptDetailPage() {
                     Este prompt foi criado com engenharia avançada. Adquira o acesso vitalício com pagamento local em AOA.
                   </p>
                   <Button variant="primary" size="md" onClick={handleBuyClick} className="shadow-glow">
-                    Desbloquear por {prompt.price.toLocaleString("pt-AO")} {prompt.currency}
+                    Desbloquear por {formatCurrency(prompt.price, prompt.currency)}
                   </Button>
                 </div>
               </div>

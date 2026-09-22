@@ -37,9 +37,11 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadUsers = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       if (search) params.set("q", search);
@@ -50,8 +52,9 @@ export default function AdminUsersPage() {
       if (res.success && res.data) {
         setUsers(res.data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao carregar usuários:", err);
+      setError(err.message || "Erro ao carregar utilizadores. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +75,7 @@ export default function AdminUsersPage() {
 
     try {
       const res = await apiClient<{ success: boolean; data: User; message: string }>(
-        `/admin/users/${targetUser.uuid ? targetUser.uuid : (targetUser as any).id}/status`,
+        `/admin/users/${targetUser.uuid}/status`,
         {
           method: "PATCH",
           body: JSON.stringify({ status: newStatus }),
@@ -91,9 +94,14 @@ export default function AdminUsersPage() {
   };
 
   const handleUpdateRole = async (targetUser: User, newRole: UserRole) => {
+    if (targetUser.uuid === currentAdmin?.uuid) {
+      alert("Você não pode alterar o próprio papel de administrador.");
+      return;
+    }
+
     try {
       const res = await apiClient<{ success: boolean; data: User; message: string }>(
-        `/admin/users/${(targetUser as any).id || targetUser.uuid}/role`,
+        `/admin/users/${targetUser.uuid}/role`,
         {
           method: "PATCH",
           body: JSON.stringify({ role: newRole }),
@@ -182,6 +190,17 @@ export default function AdminUsersPage() {
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
             <Loader2 className="w-7 h-7 animate-spin text-brand-500" />
             <p className="text-xs">Carregando utilizadores...</p>
+          </div>
+        ) : error ? (
+          <div className="py-16 flex flex-col items-center justify-center gap-3 text-center px-6">
+            <AlertCircle className="w-8 h-8 text-red-400" />
+            <p className="text-xs text-red-300 max-w-sm">{error}</p>
+            <button
+              onClick={loadUsers}
+              className="text-xs font-semibold text-brand-400 hover:text-brand-300"
+            >
+              Tentar novamente
+            </button>
           </div>
         ) : users.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">

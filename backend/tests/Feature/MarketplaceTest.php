@@ -147,11 +147,28 @@ class MarketplaceTest extends TestCase
             'payment_method' => 'multicaixa_express',
             'payment_phone' => '923000999',
         ]);
+        $checkoutRes->assertStatus(201);
         $orderNumber = $checkoutRes->json('data.order.order_number');
 
-        // 3. Payment simulation / settlement
+        // 3. Buyer declares payment was made — this only moves the order to
+        // "awaiting_confirmation"; it must NOT unlock anything by itself.
         $payRes = $this->postJson("/api/v1/orders/{$orderNumber}/pay");
         $payRes->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'status' => 'awaiting_confirmation',
+                ],
+            ]);
+
+        $creatorProfile->refresh();
+        $this->assertEquals(0.00, $creatorProfile->available_balance);
+
+        // 4. An administrator manually confirms the payment out-of-band.
+        $admin = User::factory()->create(['role' => 'admin']);
+        Sanctum::actingAs($admin, ['*']);
+        $confirmRes = $this->patchJson("/api/v1/admin/orders/{$orderNumber}/confirm");
+        $confirmRes->assertStatus(200)
             ->assertJson([
                 'success' => true,
                 'data' => [
@@ -159,12 +176,13 @@ class MarketplaceTest extends TestCase
                 ],
             ]);
 
-        // 4. Creator received 80% (4,000 AOA) and 1 sale
+        // 5. Creator received 80% (4,000 AOA) and 1 sale, only after admin confirmation
         $creatorProfile->refresh();
         $this->assertEquals(4000.00, $creatorProfile->available_balance);
         $this->assertEquals(1, $creatorProfile->total_sales_count);
 
-        // 5. Buyer now has prompt UNLOCKED and accessible
+        // 6. Buyer now has prompt UNLOCKED and accessible
+        Sanctum::actingAs($buyer, ['*']);
         $afterRes = $this->getJson("/api/v1/prompts/{$prompt->slug}");
         $afterRes->assertStatus(200)
             ->assertJson([
@@ -177,7 +195,7 @@ class MarketplaceTest extends TestCase
                 ],
             ]);
 
-        // 6. Prompt appears in user's library
+        // 7. Prompt appears in user's library
         $libraryRes = $this->getJson('/api/v1/library');
         $libraryRes->assertStatus(200)
             ->assertJsonFragment(['slug' => $prompt->slug]);

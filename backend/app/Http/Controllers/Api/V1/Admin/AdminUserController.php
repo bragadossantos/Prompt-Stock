@@ -48,16 +48,18 @@ class AdminUserController extends Controller
 
     /**
      * Atualizar status do utilizador (active, suspended).
+     * Identificado por UUID (não pelo id incremental) para evitar enumeração
+     * e para corresponder ao identificador exposto pela UserResource.
      */
-    public function updateStatus(int $id, Request $request): JsonResponse
+    public function updateStatus(string $uuid, Request $request): JsonResponse
     {
         $request->validate([
             'status' => 'required|in:active,suspended,pending',
         ]);
 
-        $user = User::findOrFail($id);
+        $user = User::where('uuid', $uuid)->firstOrFail();
 
-        // Prevent self-suspension of the main admin
+        // Prevent self-suspension of the acting admin
         if ($user->id === $request->user()->id && $request->input('status') === 'suspended') {
             return response()->json([
                 'success' => false,
@@ -68,6 +70,12 @@ class AdminUserController extends Controller
         $user->status = $request->input('status');
         $user->save();
 
+        // Defense in depth: revoke any active sessions immediately, since a
+        // suspended user's existing Sanctum token would otherwise keep working.
+        if ($user->status === 'suspended') {
+            $user->tokens()->delete();
+        }
+
         return response()->json([
             'success' => true,
             'message' => "Status do utilizador {$user->name} alterado para {$user->status}.",
@@ -77,16 +85,42 @@ class AdminUserController extends Controller
 
     /**
      * Atualizar papel do utilizador (user, creator, admin).
+     * Identificado por UUID pelo mesmo motivo de updateStatus().
      */
-    public function updateRole(int $id, Request $request): JsonResponse
+    public function updateRole(string $uuid, Request $request): JsonResponse
     {
         $request->validate([
             'role' => 'required|in:user,creator,admin',
         ]);
 
-        $user = User::findOrFail($id);
+        $user = User::where('uuid', $uuid)->firstOrFail();
+        $newRole = $request->input('role');
 
-        $user->role = $request->input('role');
+        // Prevent an admin from demoting their own account (e.g. via a
+        // compromised/leaked token), which could lock them out permanently.
+        if ($user->id === $request->user()->id && $newRole !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Não é permitido alterar o próprio papel de administrador.',
+            ], 422);
+        }
+
+        // Prevent demoting the last remaining active admin of the platform.
+        if ($user->role === 'admin' && $newRole !== 'admin') {
+            $remainingAdmins = User::where('role', 'admin')
+                ->where('status', 'active')
+                ->where('id', '!=', $user->id)
+                ->count();
+
+            if ($remainingAdmins === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Não é possível remover o último administrador ativo da plataforma.',
+                ], 422);
+            }
+        }
+
+        $user->role = $newRole;
         $user->save();
 
         return response()->json([

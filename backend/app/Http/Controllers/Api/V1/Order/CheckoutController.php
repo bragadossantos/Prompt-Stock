@@ -76,30 +76,28 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Confirmação / Simulação de pagamento.
+     * O comprador declara ter efetuado o pagamento (Multicaixa Express /
+     * transferência bancária). Isto NÃO desbloqueia o conteúdo nem credita o
+     * criador de imediato — apenas coloca a encomenda em análise. Um
+     * administrador confirma o pagamento manualmente antes de a encomenda
+     * ficar "completed" (ver AdminOrderController::confirm).
      */
     public function pay(string $orderNumber, Request $request, OrderService $orderService): JsonResponse
     {
         $user = $request->user();
 
         $order = Order::where('order_number', $orderNumber)
-            ->where(function ($query) use ($user) {
-                if (!$user->isAdmin()) {
-                    $query->where('user_id', $user->id);
-                }
-            })
+            ->where('user_id', $user->id)
             ->firstOrFail();
 
-        $order = $orderService->completeOrder($order);
+        $order = $orderService->markAwaitingConfirmation($order);
 
         return response()->json([
             'success' => true,
-            'message' => 'Pagamento liquidado e conteúdo desbloqueado com sucesso!',
+            'message' => 'Recebemos a sua confirmação de pagamento! A nossa equipa irá validar a transação e desbloquear o acesso em breve.',
             'data' => [
                 'order_number' => $order->order_number,
                 'status' => $order->status,
-                'paid_at' => $order->paid_at->toIso8601String(),
-                'prompt_slug' => $order->items->first()?->prompt?->slug,
             ],
         ]);
     }

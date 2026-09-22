@@ -66,7 +66,7 @@ class PromptController extends Controller
             default => $query->orderByDesc('published_at')->orderByDesc('created_at'),
         };
 
-        $perPage = min((int) $request->input('per_page', 12), 50);
+        $perPage = max(1, min((int) $request->input('per_page', 12), 50));
         $prompts = $query->paginate($perPage);
 
         return response()->json([
@@ -102,10 +102,24 @@ class PromptController extends Controller
 
     /**
      * Evento de cópia de prompt (Copy Prompt).
+     * Requer autenticação; prompts premium exigem compra prévia (ou autoria/admin)
+     * para impedir que qualquer pessoa infle copy_count sem ter acesso ao conteúdo.
      */
     public function copy(int $id, Request $request): JsonResponse
     {
         $prompt = Prompt::published()->findOrFail($id);
+        $user = $request->user();
+
+        if ($prompt->prompt_type !== 'free') {
+            $isOwner = $user->id === $prompt->author_id;
+
+            if (!$isOwner && !$user->isAdmin() && !$user->hasPurchased($prompt->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'É necessário adquirir este prompt antes de copiar o conteúdo.',
+                ], 403);
+            }
+        }
 
         // Increment copy and usage counters atomically
         $prompt->increment('copy_count');

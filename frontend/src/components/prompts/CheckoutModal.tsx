@@ -17,12 +17,15 @@ import { Button } from "@/components/ui/Button";
 import { apiClient } from "@/lib/api-client";
 import { Prompt } from "@/types/prompt";
 import { CheckoutResponse } from "@/types/order";
+import { formatCurrency } from "@/lib/format";
 
 interface CheckoutModalProps {
   prompt: Prompt;
   isOpen: boolean;
   onClose: () => void;
 }
+
+const MULTICAIXA_PHONE_PATTERN = /^9\d{8}$/;
 
 export function CheckoutModal({ prompt, isOpen, onClose }: CheckoutModalProps) {
   const router = useRouter();
@@ -33,9 +36,20 @@ export function CheckoutModal({ prompt, isOpen, onClose }: CheckoutModalProps) {
 
   if (!isOpen) return null;
 
+  const isPhoneValid = MULTICAIXA_PHONE_PATTERN.test(phone);
+  const isPhoneInvalidAndTouched =
+    paymentMethod === "multicaixa_express" && phone.length > 0 && !isPhoneValid;
+  const canSubmit = paymentMethod !== "multicaixa_express" || isPhoneValid;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (paymentMethod === "multicaixa_express" && !isPhoneValid) {
+      setError("Introduza um número de telemóvel Multicaixa Express válido (9 dígitos, começando por 9).");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -94,7 +108,7 @@ export function CheckoutModal({ prompt, isOpen, onClose }: CheckoutModalProps) {
           </div>
           <div className="text-right shrink-0">
             <div className="text-lg font-black text-amber-400">
-              {prompt.price.toLocaleString("pt-AO")} {prompt.currency || "AOA"}
+              {formatCurrency(prompt.price, prompt.currency || "AOA")}
             </div>
             <div className="text-[10px] text-emerald-400 flex items-center justify-end gap-1 font-medium">
               <ShieldCheck className="w-3 h-3" /> Acesso Vitalício
@@ -167,12 +181,26 @@ export function CheckoutModal({ prompt, isOpen, onClose }: CheckoutModalProps) {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
                   maxLength={9}
-                  className="w-full bg-surface/80 border border-surface-border rounded-xl pl-14 pr-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+                  minLength={9}
+                  pattern="9\d{8}"
+                  title="Número de telemóvel Multicaixa Express (9 dígitos, começando por 9)"
+                  aria-invalid={isPhoneInvalidAndTouched}
+                  className={`w-full bg-surface/80 border rounded-xl pl-14 pr-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none font-mono ${
+                    isPhoneInvalidAndTouched
+                      ? "border-red-500/70 focus:border-red-500"
+                      : "border-surface-border focus:border-brand-500"
+                  }`}
                 />
               </div>
-              <span className="text-[10px] text-slate-500 mt-1 block">
-                Irá receber uma solicitação de pagamento no seu aplicativo Express.
-              </span>
+              {isPhoneInvalidAndTouched ? (
+                <span className="text-[10px] text-red-400 mt-1 block">
+                  Número inválido. Introduza 9 dígitos começando por 9 (ex: 923000000).
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Irá receber uma solicitação de pagamento no seu aplicativo Express.
+                </span>
+              )}
             </div>
           ) : (
             <div className="p-3 rounded-xl bg-surface/60 border border-surface-border text-[11px] text-slate-300 space-y-1">
@@ -188,16 +216,17 @@ export function CheckoutModal({ prompt, isOpen, onClose }: CheckoutModalProps) {
               type="submit"
               variant="primary"
               isLoading={isSubmitting}
+              disabled={!canSubmit}
               className="w-full gap-2 shadow-glow py-3"
             >
-              <span>Pagar {prompt.price.toLocaleString("pt-AO")} {prompt.currency || "AOA"}</span>
+              <span>Pagar {formatCurrency(prompt.price, prompt.currency || "AOA")}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 text-center">
             <Lock className="w-3 h-3 text-emerald-400" />
-            <span>Transação segura e encriptada com desbloqueio instantâneo do conteúdo.</span>
+            <span>Transação segura e encriptada. O acesso é liberado após confirmação do pagamento.</span>
           </div>
         </form>
       </div>

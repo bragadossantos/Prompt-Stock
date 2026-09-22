@@ -1,7 +1,7 @@
 import { Prompt } from "./prompt";
 
-export type OrderStatus = "pending" | "completed" | "failed" | "refunded";
-export type PaymentMethod = "multicaixa_express" | "bank_transfer" | "test_gateway";
+export type OrderStatus = "pending" | "awaiting_confirmation" | "completed" | "failed" | "refunded";
+export type PaymentMethod = "multicaixa_express" | "bank_transfer";
 
 export interface OrderItem {
   id: number;

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
+use App\Http\Controllers\Api\V1\Admin\AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\AdminPromptController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
@@ -38,7 +39,6 @@ Route::prefix('v1')->group(function () {
     // Public Prompts
     Route::get('/prompts', [PromptController::class, 'index']);
     Route::get('/prompts/{slug}', [PromptController::class, 'show']);
-    Route::post('/prompts/{id}/copy', [PromptController::class, 'copy'])->middleware('throttle:30,1');
 
     // Public Creators
     Route::get('/creators', [PublicCreatorController::class, 'index']);
@@ -53,17 +53,18 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
         // Protected Auth Routes
-        Route::middleware('auth:sanctum')->group(function () {
+        Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::get('/me', [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
     });
 
     // Protected User Library, Interactions & Orders
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/library', [LibraryController::class, 'index']);
         Route::post('/prompts/{id}/favorite', [LibraryController::class, 'toggleFavorite']);
         Route::post('/prompts/{id}/save', [LibraryController::class, 'toggleSave']);
+        Route::post('/prompts/{id}/copy', [PromptController::class, 'copy'])->middleware('throttle:30,1');
         Route::post('/creator/apply', [CreatorStudioController::class, 'apply']);
 
         // Orders & Checkout
@@ -74,7 +75,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Protected Creator Studio Routes
-    Route::prefix('creator')->middleware(['auth:sanctum', 'creator'])->group(function () {
+    Route::prefix('creator')->middleware(['auth:sanctum', 'active', 'creator'])->group(function () {
         Route::get('/dashboard', [CreatorStudioController::class, 'dashboard']);
         Route::get('/earnings', [CreatorStudioController::class, 'earnings']);
         Route::post('/withdrawals', [CreatorStudioController::class, 'requestWithdrawal']);
@@ -87,7 +88,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Protected Admin Panel Routes
-    Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::prefix('admin')->middleware(['auth:sanctum', 'active', 'admin'])->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
 
         // Prompts & Moderation
@@ -98,9 +99,14 @@ Route::prefix('v1')->group(function () {
         Route::patch('/prompts/{id}/featured', [AdminPromptController::class, 'toggleFeatured']);
         Route::delete('/prompts/{id}', [AdminPromptController::class, 'destroy']);
 
+        // Orders & Payment Confirmation
+        Route::get('/orders', [AdminOrderController::class, 'index']);
+        Route::patch('/orders/{orderNumber}/confirm', [AdminOrderController::class, 'confirm']);
+        Route::patch('/orders/{orderNumber}/reject', [AdminOrderController::class, 'reject']);
+
         // Users Management
         Route::get('/users', [AdminUserController::class, 'index']);
-        Route::patch('/users/{id}/status', [AdminUserController::class, 'updateStatus']);
-        Route::patch('/users/{id}/role', [AdminUserController::class, 'updateRole']);
+        Route::patch('/users/{uuid}/status', [AdminUserController::class, 'updateStatus']);
+        Route::patch('/users/{uuid}/role', [AdminUserController::class, 'updateRole']);
     });
 });

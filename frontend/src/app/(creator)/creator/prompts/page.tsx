@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { apiClient } from "@/lib/api-client";
 import { Prompt } from "@/types/prompt";
+import { formatCurrency } from "@/lib/format";
 
 export default function CreatorPromptsPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -24,17 +25,20 @@ export default function CreatorPromptsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPrompts = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const url = statusFilter !== "all" ? `/creator/prompts?status=${statusFilter}` : "/creator/prompts";
       const res = await apiClient<{ success: boolean; data: Prompt[] }>(url);
       if (res.success && res.data) {
         setPrompts(res.data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || "Não foi possível carregar os seus prompts. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -116,11 +120,30 @@ export default function CreatorPromptsPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-3 text-xs">
+          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* Prompts List */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
           <p className="text-xs text-slate-400">Carregando os seus prompts...</p>
+        </div>
+      ) : error ? (
+        <div className="glass rounded-3xl border border-surface-border p-12 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">Erro ao carregar prompts</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+              Não foi possível carregar os seus prompts neste momento. Tente novamente mais tarde.
+            </p>
+          </div>
         </div>
       ) : filteredPrompts.length === 0 ? (
         <div className="glass rounded-3xl border border-surface-border p-12 text-center space-y-4">
@@ -178,7 +201,7 @@ export default function CreatorPromptsPage() {
                           <span className="text-emerald-400 font-semibold">Gratuito</span>
                         ) : (
                           <span className="text-amber-400 font-bold">
-                            {p.price.toLocaleString("pt-AO")} {p.currency || "AOA"}
+                            {formatCurrency(p.price, p.currency || "AOA")}
                           </span>
                         )}
                       </td>

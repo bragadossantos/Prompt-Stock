@@ -20,7 +20,7 @@ class AdminPromptController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Prompt::with(['category', 'author', 'tags']);
+        $query = Prompt::with(['category', 'author', 'tags', 'results']);
 
         if ($search = $request->input('q')) {
             $query->where(function ($q) use ($search) {

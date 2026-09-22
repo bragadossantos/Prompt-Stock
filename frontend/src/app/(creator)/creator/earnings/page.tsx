@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { apiClient } from "@/lib/api-client";
 import { CreatorProfile, CreatorWithdrawal } from "@/types/creator";
+import { formatCurrency } from "@/lib/format";
 
 export default function CreatorEarningsPage() {
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
@@ -111,7 +112,7 @@ export default function CreatorEarningsPage() {
             <Wallet className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-black text-white tracking-tight">
-            {availableBalance.toLocaleString("pt-AO")} AOA
+            {formatCurrency(availableBalance, "AOA")}
           </div>
           <div className="text-[11px] text-emerald-400 mt-1">Pronto para levantamento imediato</div>
         </div>
@@ -122,7 +123,7 @@ export default function CreatorEarningsPage() {
             <Clock className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl font-black text-white tracking-tight">
-            {pendingBalance.toLocaleString("pt-AO")} AOA
+            {formatCurrency(pendingBalance, "AOA")}
           </div>
           <div className="text-[11px] text-amber-400 mt-1">Levantamentos sob revisão</div>
         </div>
@@ -133,7 +134,7 @@ export default function CreatorEarningsPage() {
             <TrendingUp className="w-4 h-4 text-brand-400" />
           </div>
           <div className="text-2xl font-black text-white tracking-tight">
-            {totalEarnings.toLocaleString("pt-AO")} AOA
+            {formatCurrency(totalEarnings, "AOA")}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">{totalSales} vendas concluídas</div>
         </div>
@@ -189,7 +190,7 @@ export default function CreatorEarningsPage() {
                 className="w-full bg-surface/80 border border-surface-border rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-500"
               />
               <span className="text-[10px] text-slate-500">
-                Máximo disponível: {availableBalance.toLocaleString("pt-AO")} AOA
+                Máximo disponível: {formatCurrency(availableBalance, "AOA")}
               </span>
             </div>
 
@@ -253,7 +254,7 @@ export default function CreatorEarningsPage() {
               className="w-full gap-2 shadow-glow"
             >
               <Send className="w-4 h-4" />
-              <span>Solicitar {withdrawForm.amount.toLocaleString("pt-AO")} AOA</span>
+              <span>Solicitar {formatCurrency(withdrawForm.amount, "AOA")}</span>
             </Button>
             {availableBalance < 5000 && (
               <p className="text-[11px] text-amber-400/80 text-center">
@@ -295,7 +296,7 @@ export default function CreatorEarningsPage() {
                         {new Date(w.requested_at).toLocaleDateString("pt-AO")}
                       </td>
                       <td className="py-3 px-3 font-bold text-white">
-                        {w.amount.toLocaleString("pt-AO")} {w.currency}
+                        {formatCurrency(w.amount, w.currency)}
                       </td>
                       <td className="py-3 px-3">
                         <div className="text-slate-300 font-medium">

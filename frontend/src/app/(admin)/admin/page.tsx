@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -65,18 +66,21 @@ interface DashboardData {
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadStats() {
       try {
+        setError(null);
         const res = await apiClient<{ success: boolean; data: DashboardData }>(
           "/admin/dashboard"
         );
         if (res.success && res.data) {
           setData(res.data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Falha ao carregar métricas administrativas:", err);
+        setError(err.message || "Não foi possível carregar as métricas da plataforma.");
       } finally {
         setIsLoading(false);
       }
@@ -89,6 +93,18 @@ export default function AdminDashboardPage() {
       <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-slate-400">
         <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
         <p className="text-xs">Carregando métricas da plataforma...</p>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-center px-4">
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 max-w-md">
+          <AlertCircle className="w-8 h-8 mx-auto mb-3 text-rose-400" />
+          <p className="text-sm font-semibold text-white mb-1">Erro ao carregar o dashboard</p>
+          <p className="text-xs text-rose-300">{error || "Não foi possível carregar os dados administrativos."}</p>
+        </div>
       </div>
     );
   }

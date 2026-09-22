@@ -25,7 +25,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const refreshUser = async () => {
-    const savedToken = localStorage.getItem("promptstock_token");
+    let savedToken: string | null = null;
+    try {
+      savedToken = localStorage.getItem("promptstock_token");
+    } catch {
+      // localStorage inaccessible (private browsing, blocked storage, etc.)
+      setUser(null);
+      setToken(null);
+      setIsLoading(false);
+      return;
+    }
+
     if (!savedToken) {
       setUser(null);
       setToken(null);
@@ -40,7 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(savedToken);
       }
     } catch {
-      localStorage.removeItem("promptstock_token");
+      try {
+        localStorage.removeItem("promptstock_token");
+      } catch {
+        // ignore
+      }
       setUser(null);
       setToken(null);
     } finally {
@@ -49,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    refreshUser();
+    refreshUser().catch(() => setIsLoading(false));
   }, []);
 
   const login = async (email: string, password: string) => {

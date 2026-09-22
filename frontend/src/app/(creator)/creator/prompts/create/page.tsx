@@ -15,11 +15,13 @@ import {
 import { Button } from "@/components/ui/Button";
 import { apiClient } from "@/lib/api-client";
 import { Category } from "@/types/auth";
+import { formatCurrency } from "@/lib/format";
 
 export default function CreateCreatorPromptPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCats, setIsLoadingCats] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -44,6 +46,7 @@ export default function CreateCreatorPromptPage() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
+        setCategoriesError(null);
         const res = await apiClient<{ success: boolean; data: Category[] }>("/categories");
         if (res.success && res.data) {
           setCategories(res.data);
@@ -51,8 +54,9 @@ export default function CreateCreatorPromptPage() {
             setFormData((prev) => ({ ...prev, category_id: String(res.data[0].id) }));
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
+        setCategoriesError(err.message || "Não foi possível carregar as categorias. Recarregue a página.");
       } finally {
         setIsLoadingCats(false);
       }
@@ -166,6 +170,12 @@ export default function CreateCreatorPromptPage() {
                   </option>
                 ))}
               </select>
+              {categoriesError && (
+                <p className="text-[11px] text-amber-400 flex items-center gap-1.5 mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Não foi possível carregar as categorias. Recarregue a página.</span>
+                </p>
+              )}
             </div>
 
             <div>
@@ -238,7 +248,7 @@ export default function CreateCreatorPromptPage() {
                     Preço de Venda (AOA) *
                   </label>
                   <span className="text-[11px] text-amber-400">
-                    Você recebe 80% ({Math.round(formData.price * 0.8).toLocaleString("pt-AO")} AOA líquidos por venda)
+                    Você recebe 80% ({formatCurrency(Math.round(formData.price * 0.8), "AOA")} líquidos por venda)
                   </span>
                 </div>
                 <input

@@ -2,6 +2,9 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\Favorite;
+use App\Models\OrderItem;
+use App\Models\SavedPrompt;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +19,8 @@ class PromptResource extends JsonResource
     {
         $user = $request->user('sanctum') ?? $request->user();
 
+        $interactions = $user ? $this->userInteractions($request, $user) : null;
+
         $canAccessFullContent = false;
         $isPurchased = false;
 
@@ -24,7 +29,7 @@ class PromptResource extends JsonResource
         } elseif ($user) {
             if ($user->isAdmin() || $user->id === $this->author_id) {
                 $canAccessFullContent = true;
-            } elseif ($user->hasPurchased($this->id)) {
+            } elseif (in_array($this->id, $interactions['purchased'], true)) {
                 $canAccessFullContent = true;
                 $isPurchased = true;
             }
@@ -34,8 +39,8 @@ class PromptResource extends JsonResource
         $isSaved = false;
 
         if ($user) {
-            $isFavorited = $this->favorites()->where('user_id', $user->id)->exists();
-            $isSaved = $this->savedBy()->where('user_id', $user->id)->exists();
+            $isFavorited = in_array($this->id, $interactions['favorited'], true);
+            $isSaved = in_array($this->id, $interactions['saved'], true);
         }
 
         return [
@@ -103,5 +108,43 @@ class PromptResource extends JsonResource
             'published_at' => $this->published_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
         ];
+    }
+
+    /**
+     * Resolve (and cache for the lifetime of the current request) the sets of
+     * prompt IDs the given user has favorited, saved and purchased.
+     *
+     * Without this, each PromptResource instance issued its own
+     * favorites()/savedBy()/hasPurchased() relation queries, causing up to 3
+     * extra queries per prompt on every listing page (an N+1 problem). The
+     * cache is stored on the request's attribute bag so it is computed at
+     * most once per request regardless of how many resources are built, and
+     * is naturally scoped/garbage-collected with the request itself (no
+     * shared static state that could leak between requests or tests).
+     *
+     * @return array{favorited: array<int, int>, saved: array<int, int>, purchased: array<int, int>}
+     */
+    protected function userInteractions(Request $request, $user): array
+    {
+        $cacheKey = '_prompt_resource_user_interactions';
+
+        $cached = $request->attributes->get($cacheKey);
+
+        if (is_array($cached) && ($cached['user_id'] ?? null) === $user->id) {
+            return $cached;
+        }
+
+        $cached = [
+            'user_id' => $user->id,
+            'favorited' => Favorite::where('user_id', $user->id)->pluck('prompt_id')->all(),
+            'saved' => SavedPrompt::where('user_id', $user->id)->pluck('prompt_id')->all(),
+            'purchased' => OrderItem::whereHas('order', function ($query) use ($user) {
+                $query->where('user_id', $user->id)->where('status', 'completed');
+            })->pluck('prompt_id')->all(),
+        ];
+
+        $request->attributes->set($cacheKey, $cached);
+
+        return $cached;
     }
 }

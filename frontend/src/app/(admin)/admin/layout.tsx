@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect } from "react";
-import Link from "next/navigation";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import {
@@ -10,6 +9,7 @@ import {
   FileText,
   PlusCircle,
   Users,
+  Receipt,
   ExternalLink,
   Sparkles,
   ArrowLeft,
@@ -93,6 +93,12 @@ export default function AdminLayout({
       href: "/admin/users",
       icon: Users,
       exact: true,
+    },
+    {
+      label: "Encomendas",
+      href: "/admin/orders",
+      icon: Receipt,
+      exact: false,
     },
   ];
 

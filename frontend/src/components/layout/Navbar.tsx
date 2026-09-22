@@ -105,7 +105,7 @@ export function Navbar() {
               )}
 
               <Link
-                href="/dashboard"
+                href="/library"
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-surface-border hover:border-slate-600 text-sm font-medium text-slate-200"
               >
                 <div className="w-6 h-6 rounded-full bg-brand-600/30 flex items-center justify-center text-brand-400 text-xs">
@@ -194,7 +194,7 @@ export function Navbar() {
             {isAuthenticated ? (
               <>
                 <Link
-                  href="/dashboard"
+                  href="/library"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="px-3 py-2 rounded-lg bg-surface-hover text-white text-sm font-medium flex items-center justify-between"
                 >

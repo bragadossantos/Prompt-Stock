@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/Button";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { apiClient } from "@/lib/api-client";
 import { Prompt, PromptsResponse } from "@/types/prompt";
+import { formatCurrency } from "@/lib/format";
 
 export default function MarketplacePage() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -212,7 +213,7 @@ export default function MarketplacePage() {
                       </span>
                     ) : (
                       <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 shadow-glow">
-                        {p.price.toLocaleString("pt-AO")} {p.currency || "AOA"}
+                        {formatCurrency(p.price, p.currency || "AOA")}
                       </span>
                     )}
                   </div>

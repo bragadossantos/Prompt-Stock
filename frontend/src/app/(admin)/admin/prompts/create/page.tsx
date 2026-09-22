@@ -21,6 +21,7 @@ export default function CreateOfficialPromptPage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCats, setIsLoadingCats] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -42,6 +43,7 @@ export default function CreateOfficialPromptPage() {
   useEffect(() => {
     async function loadCategories() {
       try {
+        setCategoriesError(null);
         const res = await apiClient<{ success: boolean; data: Category[] }>("/categories");
         if (res.success && res.data) {
           setCategories(res.data);
@@ -49,8 +51,9 @@ export default function CreateOfficialPromptPage() {
             setCategoryId(res.data[0].id.toString());
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Falha ao carregar categorias:", err);
+        setCategoriesError(err.message || "Não foi possível carregar as categorias. Recarregue a página.");
       } finally {
         setIsLoadingCats(false);
       }
@@ -188,6 +191,12 @@ export default function CreateOfficialPromptPage() {
                   </option>
                 ))}
               </select>
+              {categoriesError && (
+                <p className="text-[11px] text-amber-400 flex items-center gap-1.5 mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Não foi possível carregar as categorias. Recarregue a página.</span>
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

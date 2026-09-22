@@ -149,6 +149,8 @@ class PromptTest extends TestCase
     {
         $category = Category::factory()->create();
         $author = User::factory()->create();
+        $user = User::factory()->create();
+        $token = $user->createToken('test-token')->plainTextToken;
 
         $prompt = Prompt::create([
             'title' => 'Prompt para Cópia',
@@ -165,7 +167,8 @@ class PromptTest extends TestCase
             'status' => 'published',
         ]);
 
-        $response = $this->postJson("/api/v1/prompts/{$prompt->id}/copy");
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson("/api/v1/prompts/{$prompt->id}/copy");
 
         $response->assertStatus(200)
             ->assertJson([

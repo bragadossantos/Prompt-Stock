@@ -22,7 +22,7 @@ class CreatorPromptController extends Controller
         $user = $request->user();
 
         $prompts = Prompt::where('author_id', $user->id)
-            ->with(['category', 'tags', 'results'])
+            ->with(['category', 'tags', 'results', 'author'])
             ->orderByDesc('created_at')
             ->paginate(20);
 

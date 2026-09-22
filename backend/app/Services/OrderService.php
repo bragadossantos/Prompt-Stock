@@ -13,6 +13,12 @@ use Illuminate\Validation\ValidationException;
 class OrderService
 {
     /**
+     * Estados de uma encomenda que ainda não foram liquidados/rejeitados e
+     * portanto contam como "em aberto" para efeitos de duplicação.
+     */
+    private const OPEN_STATUSES = ['pending', 'awaiting_confirmation'];
+
+    /**
      * Cria uma nova encomenda para um prompt.
      */
     public function createOrder(
@@ -30,6 +36,22 @@ class OrderService
         if ($user->hasPurchased($prompt->id)) {
             throw ValidationException::withMessages([
                 'prompt_id' => ['Você já adquiriu este prompt anteriormente.'],
+            ]);
+        }
+
+        // Prevent creating duplicate pending/awaiting orders for the same prompt,
+        // which would otherwise let a buyer submit several "payment confirmed"
+        // claims for the same item and multiply the creator's credited earnings.
+        $hasOpenOrder = $user->orders()
+            ->whereIn('status', self::OPEN_STATUSES)
+            ->whereHas('items', function ($query) use ($prompt) {
+                $query->where('prompt_id', $prompt->id);
+            })
+            ->exists();
+
+        if ($hasOpenOrder) {
+            throw ValidationException::withMessages([
+                'prompt_id' => ['Você já tem uma encomenda em aberto para este prompt. Aguarde a confirmação do pagamento.'],
             ]);
         }
 
@@ -81,7 +103,39 @@ class OrderService
     }
 
     /**
+     * O comprador declara ter efetuado o pagamento. Isto NÃO desbloqueia a
+     * encomenda nem credita o criador — apenas marca a encomenda como
+     * aguardando confirmação manual de um administrador (confirmPayment()).
+     */
+    public function markAwaitingConfirmation(Order $order): Order
+    {
+        if ($order->isCompleted()) {
+            return $order;
+        }
+
+        if ($order->status !== 'pending') {
+            throw ValidationException::withMessages([
+                'status' => ['Esta encomenda já foi submetida ou processada anteriormente.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($order) {
+            $locked = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->status !== 'pending') {
+                return $locked->fresh(['items.prompt', 'user']);
+            }
+
+            $locked->update(['status' => 'awaiting_confirmation']);
+
+            return $locked->fresh(['items.prompt', 'user']);
+        });
+    }
+
+    /**
      * Confirma e liquida a encomenda, desbloqueando acesso e creditando o criador.
+     * Só deve ser chamado por um administrador após verificar o pagamento fora
+     * da plataforma (Multicaixa Express / transferência bancária).
      */
     public function completeOrder(Order $order): Order
     {
@@ -90,14 +144,23 @@ class OrderService
         }
 
         return DB::transaction(function () use ($order) {
-            $order->update([
+            // Lock the row for the duration of the transaction so two concurrent
+            // confirmations of the same order can't both pass the status check
+            // and both credit the creator's wallet.
+            $locked = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isCompleted()) {
+                return $locked->fresh(['items.prompt', 'user']);
+            }
+
+            $locked->update([
                 'status' => 'completed',
                 'paid_at' => now(),
             ]);
 
-            $order->loadMissing(['items.prompt', 'user']);
+            $locked->loadMissing(['items.prompt', 'user']);
 
-            foreach ($order->items as $item) {
+            foreach ($locked->items as $item) {
                 // 1. Credita a carteira do Criador (Split 80%)
                 if ($item->creator_id && $item->creator_earnings > 0) {
                     $creatorProfile = CreatorProfile::firstOrCreate(
@@ -121,14 +184,44 @@ class OrderService
                 }
 
                 // 3. Adiciona automaticamente à biblioteca do comprador
-                if ($order->user && $item->prompt_id) {
-                    if (!$order->user->savedLibraryPrompts()->where('prompt_id', $item->prompt_id)->exists()) {
-                        $order->user->savedLibraryPrompts()->attach($item->prompt_id);
+                if ($locked->user && $item->prompt_id) {
+                    if (!$locked->user->savedLibraryPrompts()->where('prompt_id', $item->prompt_id)->exists()) {
+                        $locked->user->savedLibraryPrompts()->attach($item->prompt_id);
                     }
                 }
             }
 
-            return $order->fresh(['items.prompt', 'user']);
+            return $locked->fresh(['items.prompt', 'user']);
+        });
+    }
+
+    /**
+     * Um administrador rejeita a alegação de pagamento (comprovativo inválido,
+     * pagamento não recebido, etc.).
+     */
+    public function rejectOrder(Order $order, ?string $reason = null): Order
+    {
+        if ($order->isCompleted()) {
+            throw ValidationException::withMessages([
+                'status' => ['Não é possível rejeitar uma encomenda já confirmada.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($order, $reason) {
+            $locked = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isCompleted()) {
+                throw ValidationException::withMessages([
+                    'status' => ['Não é possível rejeitar uma encomenda já confirmada.'],
+                ]);
+            }
+
+            $locked->update([
+                'status' => 'failed',
+                'notes' => $reason,
+            ]);
+
+            return $locked->fresh(['items.prompt', 'user']);
         });
     }
 }

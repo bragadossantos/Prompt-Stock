@@ -9,10 +9,22 @@ use App\Models\CreatorWithdrawal;
 use App\Models\Prompt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CreatorStudioController extends Controller
 {
+    /**
+     * Gera um username de criador único e determinístico a partir do id do
+     * utilizador, evitando colisões que o antigo sufixo aleatório de 4
+     * caracteres podia produzir (e que fariam firstOrCreate() lançar uma
+     * QueryException não tratada por violar a constraint única).
+     */
+    private function generateCreatorUsername(int $userId, string $name): string
+    {
+        return Str::slug($name) . '-' . $userId;
+    }
+
     /**
      * Métricas consolidadas do Creator Studio do utilizador autenticado.
      */
@@ -23,7 +35,7 @@ class CreatorStudioController extends Controller
         $profile = CreatorProfile::firstOrCreate(
             ['user_id' => $user->id],
             [
-                'username' => Str::slug($user->name) . '-' . Str::random(4),
+                'username' => $this->generateCreatorUsername($user->id, $user->name),
                 'headline' => 'Criador de Conteúdo e Prompts de IA',
                 'available_balance' => 0.00,
                 'pending_balance' => 0.00,
@@ -86,7 +98,7 @@ class CreatorStudioController extends Controller
         $profile = CreatorProfile::firstOrCreate(
             ['user_id' => $user->id],
             [
-                'username' => Str::slug($user->name) . '-' . Str::random(4),
+                'username' => $this->generateCreatorUsername($user->id, $user->name),
                 'headline' => 'Criador da Comunidade PromptStock',
                 'bio' => $request->input('bio', 'Apaixonado por IA e engenharia de prompts.'),
             ]
@@ -134,29 +146,44 @@ class CreatorStudioController extends Controller
     public function requestWithdrawal(WithdrawalRequest $request): JsonResponse
     {
         $user = $request->user();
-        $profile = $user->creatorProfile;
         $amount = (float) $request->validated('amount');
 
-        if (!$profile || (float) $profile->available_balance < $amount) {
+        if (!$user->creatorProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Saldo disponível insuficiente para realizar este levantamento.',
             ], 422);
         }
 
-        // Deduz do saldo disponível e move para pendente
-        $profile->available_balance -= $amount;
-        $profile->pending_balance += $amount;
-        $profile->save();
+        try {
+            $withdrawal = DB::transaction(function () use ($user, $amount, $request) {
+                // Lock the row for the duration of the transaction so two
+                // concurrent withdrawal requests can't both read the same
+                // available_balance and both pass the sufficiency check.
+                $profile = CreatorProfile::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
 
-        $withdrawal = CreatorWithdrawal::create([
-            'user_id' => $user->id,
-            'amount' => $amount,
-            'currency' => 'AOA',
-            'payment_method' => $request->validated('payment_method'),
-            'account_details' => $request->validated('account_details'),
-            'status' => 'pending',
-        ]);
+                if ((float) $profile->available_balance < $amount) {
+                    abort(422, 'Saldo disponível insuficiente para realizar este levantamento.');
+                }
+
+                $profile->decrement('available_balance', $amount);
+                $profile->increment('pending_balance', $amount);
+
+                return CreatorWithdrawal::create([
+                    'user_id' => $user->id,
+                    'amount' => $amount,
+                    'currency' => 'AOA',
+                    'payment_method' => $request->validated('payment_method'),
+                    'account_details' => $request->validated('account_details'),
+                    'status' => 'pending',
+                ]);
+            });
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getStatusCode());
+        }
 
         return response()->json([
             'success' => true,

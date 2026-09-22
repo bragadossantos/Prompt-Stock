@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('total_amount', 12, 2);
             $table->string('currency', 10)->default('AOA');
             $table->string('status', 30)->default('pending'); // pending, completed, failed, refunded
-            $table->string('payment_method', 50)->default('multicaixa_express'); // multicaixa_express, bank_transfer, test_gateway
+            $table->string('payment_method', 50)->default('multicaixa_express'); // multicaixa_express, bank_transfer
             $table->string('payment_phone')->nullable();
             $table->string('payment_reference')->nullable();
             $table->timestamp('paid_at')->nullable();
